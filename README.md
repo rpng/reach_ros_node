@@ -21,7 +21,7 @@ Right now this supports all NMEA messages from the package, while some are not u
 6. `rosrun reach_ros_node nmea_tcp_driver _host:=128.4.89.123 _port:=2234`
 
 
-### Driver Details
+## Driver Details
 
 * Publishes GPS fix, velocity, and time reference
   * `/tcpfix` - NavSatFixed
@@ -35,7 +35,7 @@ Right now this supports all NMEA messages from the package, while some are not u
 
 
 
-### Credit
+## Credit
 
 Original starting point of the driver was the ROS driver [nmea_navsat_driver](https://github.com/ros-drivers/nmea_navsat_driver) which was then expanded by [CearLab](https://github.com/CearLab/nmea_tcp_driver) to work with the Reach RTK.
 This package is more complete, and aims to allow for use of the Reach RTK in actual robotic systems, please open a issue if you run into any issues.

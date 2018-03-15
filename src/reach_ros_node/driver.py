@@ -87,6 +87,10 @@ class RosNMEADriver(object):
         self.parse_VTG(parsed_sentence)
         self.parse_RMC(parsed_sentence)
 
+        # Special care to parse the time reference
+        # This can come from either the GGA or RMC
+        self.parse_time(parsed_sentence)
+
         # Now that we are done with processing messages
         # Lets publish what we have!
         if self.has_fix and self.has_std:
@@ -101,6 +105,7 @@ class RosNMEADriver(object):
         if self.has_timeref:
             self.timeref_pub.publish(self.msg_timeref)
             self.msg_timeref = TimeReference()
+            self.has_timeref = False
 
 
 
@@ -248,5 +253,34 @@ class RosNMEADriver(object):
         self.msg_vel.twist.linear.x = data['speed'] * math.sin(data['true_course'])
         self.msg_vel.twist.linear.y = data['speed'] * math.cos(data['true_course'])
         self.has_vel = True
+
+
+
+    # Parses the NMEA messages and just grab the time reference
+    def parse_time(self,datag):
+
+        # Get our message data
+        if not self.use_rmc and 'GGA' in datag:
+            data = datag['GGA']
+        elif self.use_rmc and 'RMC' in datag:
+            data = datag['RMC']
+        else:
+            return
+        # Return if time is NaN
+        if math.isnan(data['utc_time']):
+            return
+        # If using ROS time, use the current timestamp
+        if self.use_rostime:
+            self.msg_timeref.header.stamp = rospy.get_rostime()
+        else:
+            self.msg_timeref.header.stamp = rospy.Time.from_sec(data['utc_time'])
+        # Set the frame ID
+        self.msg_timeref.header.frame_id = self.frame_timeref
+        # Set the actuall time reference
+        self.msg_timeref.time_ref = rospy.Time.from_sec(data['utc_time'])
+        self.msg_timeref.source = self.frame_timeref
+        self.has_timeref = True
+        
+
 
 
