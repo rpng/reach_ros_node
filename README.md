@@ -12,11 +12,11 @@ Right now this supports all NMEA messages from the package, while some are not u
 2. Turn on your Reach RTK module
 3. Ensure that you are connected to the same network as it
 4. Edit the "Position output"
-  * Be in TCP mode
-  * Role: Server
-  * Address: localhost
-  * Port: any free port
-  * Format: NMEA
+   * Be in TCP mode
+   * Role: Server
+   * Address: localhost
+   * Port: any free port
+   * Format: NMEA
 5. Using the IP of the Reach RTK and the specified port launch this package
 6. `rosrun reach_ros_node nmea_tcp_driver _host:=128.4.89.123 _port:=2234`
 
