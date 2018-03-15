@@ -39,53 +39,106 @@ import os
 import sys
 import reach_ros_node.driver
 
-# Read one line from the socket
-# We want to read a single line as this is a single nmea message
-# https://stackoverflow.com/a/41333900
-def buffered_readLine(socket):
-    line = ""
-    while True:
-        part = socket.recv(1)
-        if part != "\n":
-            line += part
-        elif part == "\n":
-            break
-    return line
+
+class ReachSocketHandler:
+
+    # Set our parameters and the default socket to open
+    def __init__(self,host,port):
+        self.host = host
+        self.port = port
+        
+
+    # Should open the connection and connect to the device
+    # This will then also start publishing the information
+    def start(self):
+        # Try to connect to the device
+        rospy.loginfo('Connecting to Reach RTK %s on port %s' % (str(self.host),str(self.port)))
+        self.connect_to_device()
+        try:
+            # Create the driver
+            driver = reach_ros_node.driver.RosNMEADriver()
+            while not rospy.is_shutdown():
+                #GPS = soc.recv(1024)
+                data = self.buffered_readLine().strip()
+                # Debug print message line
+                #print(data)
+                # Try to parse this data!
+                try:
+                    driver.process_line(data)
+                except ValueError as e:
+                    rospy.logerr("Value error, likely due to missing fields in the NMEA message. Error was: %s." % e)
+        except rospy.ROSInterruptException:
+            # Close GPS socket when done
+            self.soc.close()
+
+
+
+    # Try to connect to the device, allows for reconnection
+    # Will loop till we get a connection, note we have a long timeout
+    def connect_to_device(self):
+        while not rospy.is_shutdown():
+            try:
+                self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.soc.settimeout(5.0)
+                self.soc.connect((self.host,self.port))
+                rospy.loginfo('Successfully connected to device, starting publishing!')
+                return
+            except socket.timeout:
+                rospy.logwarn_throttle(30,'Socket connection timeout. Retrying...')
+                continue
+            except Exception as e:
+                rospy.logerr("Socket connection error. Error was: %s." % e)
+                exit()
+
+
+    # Try to connect to the device, assuming it just was disconnected
+    # Will loop till we get a connection
+    def reconnect_to_device(self):
+        rospy.logwarn('Device disconnected. Reconnecting...')
+        self.soc.close()
+        self.connect_to_device()
+
+
+
+    # Read one line from the socket
+    # We want to read a single line as this is a single nmea message
+    # https://stackoverflow.com/a/41333900
+    # Also set a timeout so we can make sure we have a valid socket
+    # https://stackoverflow.com/a/15175067
+    def buffered_readLine(self):
+        line = ""
+        while not rospy.is_shutdown():
+            # Try to get data from it
+            try:
+                part = self.soc.recv(1)
+            except socket.timeout:
+                self.reconnect_to_device()
+                continue
+            # See if we need to process the data
+            if not part or len(part) == 0:
+                self.reconnect_to_device()
+                continue
+            if part != "\n":
+                line += part
+            elif part == "\n":
+                break
+        return line
 
 
 
 if __name__ == '__main__':
-    rospy.init_node('nmea_tcp_driver')
 
-    s = socket.socket()         # Create a socket object
+    # Initialize our ros node
+    rospy.init_node('reach_ros_node')
+
+    # Read in ROS parameters
     host = rospy.get_param('~host', 'reach.local')
     port = rospy.get_param('~port', 12346)
 
-    s.connect((host, port))
-    print("=================================")
-    print("     Reach Device Connected")
-    print("        "+host+":"+str(port))
-    print("=================================")
+    # Open the socket to our device, and start streaming the data
+    device = ReachSocketHandler(host,port)
+    device.start()
 
 
-    try:
-
-        driver = reach_ros_node.driver.RosNMEADriver()
-        while not rospy.is_shutdown():
-            #GPS = s.recv(1024)
-            data = buffered_readLine(s)
-            data = data.strip()
-        
-            # Debug print message line
-            #print(data)
-
-            # Try to parse this data!
-            try:
-                driver.process_line(data)
-            except ValueError as e:
-                rospy.logwarn("Value error, likely due to missing fields in the NMEA message. Error was: %s. Please report this issue at github.com/ros-drivers/nmea_navsat_driver, including a bag file with the NMEA sentences that caused it." % e)
 
 
-    except rospy.ROSInterruptException:
-        # Close GPS socket when done
-        s.close()
