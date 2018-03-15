@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package>
+  <name>reach_ros_node</name>
+  <version>0.5.0</version>
+  <description>
+	Package to parse NMEA strings from TCP input and publish a very simple GPS message.
+  Does not require the GPSD deamon to be installed.
+  Converted to work with the Reach RTK GPS units.
+  </description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <maintainer email="pgneva@udel.edu">Patrick Geneva</maintainer>
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <license>BSD</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roslint</build_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>python-serial</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nmea_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <!-- This is a pure Python package, so mark it architecture independent -->
+  <export><architecture_independent/></export>
+
+  
+</package>
