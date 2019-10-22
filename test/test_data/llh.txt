@@ -1,0 +1,2 @@
+# date time latitude(deg) longitude(deg) height(m) Q ns sdn(m) sde(m) sdu(m) sdne(m) sdeu(m) sdun(m) age(s) ratio
+2019/10/22 18:37:14.200   25.958982413  -80.264451550   -22.7068   1   8   0.0117   0.0072   0.0242   0.0043   0.0029   0.0130   0.59  295.9
