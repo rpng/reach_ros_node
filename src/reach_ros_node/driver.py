@@ -63,21 +63,21 @@ class RosNMEADriver(object):
         self.msg_vel = TwistStamped()
         self.msg_timeref = TimeReference()
 
-
-
-    # Will process the nmea_string, and try to update our current state
-    # Should try to publish as many messages as possible with the given data
+    # Will process the nmea_string, and try to update our current state.
+    # Should try to publish as many messages as possible with the given data.
     def process_line(self, nmea_string):
         
         # Check if valid message
         if not check_nmea_checksum(nmea_string):
-            rospy.logwarn("Received a sentence with an invalid checksum. Sentence was: %s" % repr(nmea_string))
+            rospy.logwarn("Received a sentence with an invalid checksum. "
+                          "Sentence was: %s" % repr(nmea_string))
             return
         
         # Else we are good, lets try to process this message
         parsed_sentence = reach_ros_node.parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            rospy.logwarn("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            rospy.logwarn("Failed to parse NMEA sentence. Sentence was: %s" %
+                          nmea_string)
             return
 
         # We have a good message!!
@@ -107,20 +107,17 @@ class RosNMEADriver(object):
             self.msg_timeref = TimeReference()
             self.has_timeref = False
 
-
-
-
-    # Parses the GGA NMEA message type
+    # Parses the GGA NMEA message type.
     def parse_GGA(self,datag):
-        # Check if we should parse this message
+        # Check if we should parse this message.
         if not 'GGA' in datag:
             return
-        # Return if are using RCm
+        # Return if are using RCm.
         if self.use_rmc:
             return
-        # Else lets set what variables we can
+        # Else lets set what variables we can.
         data = datag['GGA']
-        # If using ROS time, use the current timestamp
+        # If using ROS time, use the current timestamp.
         if self.use_rostime:
             self.msg_fix.header.stamp = rospy.get_rostime()
         else:
@@ -140,7 +137,7 @@ class RosNMEADriver(object):
         else:
             self.msg_fix.status.status = NavSatStatus.STATUS_NO_FIX
         self.msg_fix.status.service = NavSatStatus.SERVICE_GPS
-        # Set our lat lon position
+        # Set our lat lon position.
         latitude = data['latitude']
         if data['latitude_direction'] == 'S':
             latitude = -latitude
@@ -153,67 +150,58 @@ class RosNMEADriver(object):
         self.msg_fix.altitude = data['altitude'] + data['mean_sea_level']
         self.has_fix = True
 
-
-
-
-    # Parses the GST NMEA message type
+    # Parses the GST NMEA message type.
     def parse_GST(self,datag):
-        # Check if we should parse this message
+        # Check if we should parse this message.
         if not 'GST' in datag:
             return
-        # Return if are using RCM
+        # Return if are using RCM.
         if self.use_rmc:
             return
-        # Else lets set what variables we can
+        # Else lets set what variables we can.
         data = datag['GST']
-        # Update the fix message with std
+        # Update the fix message with std.
         self.msg_fix.position_covariance[0] = pow(data['latitude_sigma'],2)
         self.msg_fix.position_covariance[4] = pow(data['longitude_sigma'],2)
         self.msg_fix.position_covariance[8] = pow(data['altitude_sigma'],2)
         self.msg_fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_APPROXIMATED
         self.has_std = True
 
-
-
-
-    # Parses the VTG NMEA message type
+    # Parses the VTG NMEA message type.
     def parse_VTG(self,datag):
-        # Check if we should parse this message
+        # Check if we should parse this message.
         if not 'VTG' in datag:
             return
-        # Return if are using RCM
+        # Return if are using RCM.
         if self.use_rmc:
             return
-        # Else lets set what variables we can
+        # Else lets set what variables we can.
         data = datag['VTG']
-        # Next lets publish the velocity we have
-        # If using ROS time, use the current timestamp
-        # Else this message doesn't provide a time, so just set to zero
+        # Next lets publish the velocity we have.
+        # If using ROS time, use the current timestamp,
+        # else this message doesn't provide a time, so just set to zero.
         if self.use_rostime:
             self.msg_vel.header.stamp = rospy.get_rostime()
         else:
             self.msg_vel.header.stamp = rospy.Time.from_sec(0)
-        # Set the frame ID
+        # Set the frame ID.
         self.msg_vel.header.frame_id = self.frame_gps
-        # Calculate the change in orientatoin
+        # Calculate the change in orientation.
         self.msg_vel.twist.linear.x = data['speed'] * math.sin(data['ori_true'])
         self.msg_vel.twist.linear.y = data['speed'] * math.cos(data['ori_true'])
         self.has_vel = True
 
-
-
-
-    # Parses the RMC NMEA message type
-    def parse_RMC(self,datag):
-        # Check if we should parse this message
+    # Parses the RMC NMEA message type.
+    def parse_RMC(self, datag):
+        # Check if we should parse this message.
         if not 'RMC' in datag:
             return
-        # Return if not using RCM
+        # Return if not using RCM.
         if not self.use_rmc:
             return
-        # Else lets set what variables we can
+        # Else lets set what variables we can.
         data = datag['RMC']
-        # If using ROS time, use the current timestamp
+        # If using ROS time, use the current timestamp.
         if self.use_rostime:
             self.msg_fix.header.stamp = rospy.get_rostime()
         else:
@@ -241,46 +229,40 @@ class RosNMEADriver(object):
         self.has_fix = True
         self.has_std = True
 
-        # Next lets publish the velocity we have
-        # If using ROS time, use the current timestamp
+        # Next lets publish the velocity we have.
+        # If using ROS time, use the current timestamp.
         if self.use_rostime:
             self.msg_vel.header.stamp = rospy.get_rostime()
         else:
             self.msg_vel.header.stamp = rospy.Time.from_sec(data['utc_time'])
-        # Set the frame ID
+        # Set the frame ID.
         self.msg_vel.header.frame_id = self.frame_gps
-        # Calculate the change in orientatoin
+        # Calculate the change in orientation.
         self.msg_vel.twist.linear.x = data['speed'] * math.sin(data['true_course'])
         self.msg_vel.twist.linear.y = data['speed'] * math.cos(data['true_course'])
         self.has_vel = True
 
-
-
-    # Parses the NMEA messages and just grab the time reference
+    # Parses the NMEA messages and just grab the time reference.
     def parse_time(self,datag):
 
-        # Get our message data
+        # Get our message data.
         if not self.use_rmc and 'GGA' in datag:
             data = datag['GGA']
         elif self.use_rmc and 'RMC' in datag:
             data = datag['RMC']
         else:
             return
-        # Return if time is NaN
+        # Return if time is NaN.
         if math.isnan(data['utc_time']):
             return
-        # If using ROS time, use the current timestamp
+        # If using ROS time, use the current timestamp.
         if self.use_rostime:
             self.msg_timeref.header.stamp = rospy.get_rostime()
         else:
             self.msg_timeref.header.stamp = rospy.Time.from_sec(data['utc_time'])
-        # Set the frame ID
+        # Set the frame ID.
         self.msg_timeref.header.frame_id = self.frame_timeref
-        # Set the actuall time reference
+        # Set the actual time reference.
         self.msg_timeref.time_ref = rospy.Time.from_sec(data['utc_time'])
         self.msg_timeref.source = self.frame_timeref
         self.has_timeref = True
-        
-
-
-

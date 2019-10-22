@@ -62,13 +62,13 @@ def convert_longitude(field):
     return safe_float(field[0:3]) + safe_float(field[3:]) / 60.0
 
 
-# convert the time into standard unix time in seconds
+# convert the time into standard unix time in seconds:
 # https://stackoverflow.com/a/11111177
 def convert_time(nmea_utc):
-    # Get current time in UTC for date information
-    utc_struct = time.gmtime()  # immutable, so cannot modify this one
+    # Get current time in UTC for date information.
+    utc_struct = time.gmtime()  # Immutable, so cannot modify this one.
     utc_list = list(utc_struct)
-    # If one of the time fields is empty, return NaN seconds
+    # If one of the time fields is empty, return NaN seconds.
     if not nmea_utc[0:2] or not nmea_utc[2:4] or not nmea_utc[4:6] or not nmea_utc[7:]:
         return float('NaN')
     else:
@@ -189,7 +189,8 @@ parse_maps = {
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
     if not re.match('(^\$GP|^\$GA|^\$GN|^\$GL).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
-        logger.warn("Regex didn't match, sentence not valid NMEA? Sentence was: %s" % repr(nmea_sentence))
+        logger.warn("Regex didn't match, sentence not valid NMEA? Sentence was:"
+                    " %s" % repr(nmea_sentence))
         return False
 
     # Remove the last bit after the asterisk, this is the checksum
@@ -203,7 +204,8 @@ def parse_nmea_sentence(nmea_sentence):
 
     # Check to see if we have a maping for this message type
     if not sentence_type in parse_maps:
-        logger.warn("Sentence type %s not in parse map, ignoring." % repr(sentence_type))
+        logger.warn("Sentence type %s not in parse map, ignoring." %
+                    repr(sentence_type))
         return False
 
     # Parse the message, and return it
