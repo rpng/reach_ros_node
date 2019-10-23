@@ -271,8 +271,9 @@ class RosNMEADriver(object):
 
 class RosLLHDriver(object):
     def __init__(self):
+        self.frame_gps = rospy.get_param('~frame_gps', 'gps')
+        self.seq = 0
         self.llh_pub = rospy.Publisher('llh', LLH, queue_size=1)
-        self.llh_msg = LLH()
 
     def process_line(self, llh_string):
         parsed_sentence = reach_ros_node.parser.parse_llh_sentence(llh_string)
@@ -281,7 +282,25 @@ class RosLLHDriver(object):
                           llh_string)
             return
 
-        # Publish here.
-
-        assert False, "Not yet implemented."
-
+        # Populate an LLH message, and publish it.
+        self.seq += 1
+        llh_msg = LLH()
+        llh_msg.header.stamp = rospy.Time.now()  # Message publish time.
+        llh_msg.header.frame_id = self.frame_gps
+        llh_msg.header.seq = self.seq
+        llh_msg.date = parsed_sentence['date']
+        llh_msg.utc_time = parsed_sentence['utc_time']
+        llh_msg.latitude = parsed_sentence['latitude']
+        llh_msg.longitude = parsed_sentence['longitude']
+        llh_msg.altitude = parsed_sentence['altitude']
+        llh_msg.quality_flag = parsed_sentence['quality_flag']
+        llh_msg.num_sats = parsed_sentence['num_sats']
+        llh_msg.sdn = parsed_sentence['sdn']
+        llh_msg.sde = parsed_sentence['sde']
+        llh_msg.sdu = parsed_sentence['sdu']
+        llh_msg.sdne = parsed_sentence['sdne']
+        llh_msg.sdeu = parsed_sentence['sdeu']
+        llh_msg.sdun = parsed_sentence['sdun']
+        llh_msg.diff_age = parsed_sentence['diff_age']
+        llh_msg.ratio = parsed_sentence['ratio']
+        self.llh_pub.publish(llh_msg)

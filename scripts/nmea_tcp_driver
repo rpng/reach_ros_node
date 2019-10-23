@@ -37,16 +37,16 @@ import threading
 
 import rospy
 
-from reach_ros_node.driver import RosNMEADriver
+from reach_ros_node.driver import RosLLHDriver, RosNMEADriver
 
 
 class ReachSocketHandler(threading.Thread):
 
     # Set our parameters and the default socket to open
-    def __init__(self, hostname, tcp_port, format_driver):
+    def __init__(self, hostname, tcp_port, format_nmea_driver):
         self.host = hostname
         self.port = tcp_port
-        self.driver = format_driver
+        self.nmea_driver = format_nmea_driver
         self.soc = None
         threading.Thread.__init__(self)
 
@@ -63,13 +63,14 @@ class ReachSocketHandler(threading.Thread):
 
             # Try to parse this data!
             try:
-                self.driver.process_line(data)
+                self.nmea_driver.process_line(data)
             except ValueError as e:
                 rospy.logerr("Value error, likely due to missing fields in "
                              "the message. Error was: %s." % e)
         # Close GPS socket when done.
         self.soc.close()
-        rospy.logdebug("ReachSocketHandler.run() exiting.")
+        rospy.logdebug("ReachSocketHandler.run() (port %d) exiting." %
+                       self.port)
 
     # Try to connect to the device, allows for reconnection
     # Will loop till we get a connection, note we have a long timeout
@@ -128,14 +129,26 @@ if __name__ == '__main__':
 
     # Read in ROS parameters
     host = rospy.get_param('~host', '127.0.0.1')
-    port = rospy.get_param('~port', 12346)
+    nmea_port = rospy.get_param('~port', 12346)
 
-    # Open the socket to our device, and start streaming the data
-    driver = RosNMEADriver()
-    device = ReachSocketHandler(host, port, driver)
-    device.start()
+    # Open the socket to our nmea_sock_handler, and start streaming the data.
+    nmea_driver = RosNMEADriver()
+    nmea_sock_handler = ReachSocketHandler(host, nmea_port, nmea_driver)
+    nmea_sock_handler.start()
+
+    # If specified, create and run the (optional) LLH driver
+    llh_port = rospy.get_param('~llh_port', 12347)
+    llh_sock_handler = None
+    if llh_port:
+        llh_driver = RosLLHDriver()
+        llh_sock_handler = ReachSocketHandler(host, llh_port, llh_driver)
+        llh_sock_handler.start()
+
+    # Run until shutdown.
     rospy.spin()
 
     # Wait for SocketHandler to finish, then exit.
-    device.join()
+    nmea_sock_handler.join()
+    if llh_sock_handler:
+        llh_sock_handler.join()
     rospy.logdebug("__main()__ exiting.")

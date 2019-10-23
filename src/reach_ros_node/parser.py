@@ -185,7 +185,7 @@ parse_maps = {
         ],
     "LLH": [
         ("date", str, 0),
-        ("time", str, 1),
+        ("utc_time", str, 1),
         ("latitude", safe_float, 2),
         ("longitude", safe_float, 3),
         ("altitude", safe_float, 4),
@@ -197,7 +197,7 @@ parse_maps = {
         ("sdne", safe_float, 10),
         ("sdeu", safe_float, 11),
         ("sdun", safe_float, 12),
-        ("age", safe_float, 13),
+        ("diff_age", safe_float, 13),
         ("ratio", safe_float, 14)
         ]
     }
