@@ -39,6 +39,7 @@ import math
 import logging
 logger = logging.getLogger('rosout')
 
+from reach_ros_node.msg import LLH
 
 def safe_float(field):
     try:
@@ -62,13 +63,13 @@ def convert_longitude(field):
     return safe_float(field[0:3]) + safe_float(field[3:]) / 60.0
 
 
-# convert the time into standard unix time in seconds
+# convert the time into standard unix time in seconds:
 # https://stackoverflow.com/a/11111177
 def convert_time(nmea_utc):
-    # Get current time in UTC for date information
-    utc_struct = time.gmtime()  # immutable, so cannot modify this one
+    # Get current time in UTC for date information.
+    utc_struct = time.gmtime()  # Immutable, so cannot modify this one.
     utc_list = list(utc_struct)
-    # If one of the time fields is empty, return NaN seconds
+    # If one of the time fields is empty, return NaN seconds.
     if not nmea_utc[0:2] or not nmea_utc[2:4] or not nmea_utc[4:6] or not nmea_utc[7:]:
         return float('NaN')
     else:
@@ -108,6 +109,25 @@ def convert_knots_to_mps(knots):
 # Need this wrapper because math.radians doesn't auto convert inputs
 def convert_deg_to_rads(degs):
     return math.radians(safe_float(degs))
+
+
+def covariance_matrix(llh):
+    """
+    Return a full 9-element (symmetric) covariance matrix,
+    given the six known stdev values in the LLH sentence.
+    Args:
+        llh (str): LLH sentence, as received from an Emlid Reach.
+            See page 101 in doc/rtklib_manaual_2.4.2.pdf.
+    Returns:
+        cm (list(float)): full 9-element covariance matrix.
+    """
+    cm = [llh['sdn'], llh['sdne'], llh['sdun'],
+          llh['sdne'], llh['sde'], llh['sdeu'],
+          llh['sdun'], llh['sdeu'], llh['sdu']]
+
+    # Cov == sigma ^ 2.
+    cm = map(lambda sigma: sigma ** 2, cm)
+    return cm
 
 
 """
@@ -182,6 +202,23 @@ parse_maps = {
         ("pdop", safe_float, 4),
         ("hdop", safe_float, 5),
         ("vdop", safe_float, 6)
+        ],
+    "LLH": [
+        ("date", str, 0),
+        ("utc_time", str, 1),
+        ("latitude", safe_float, 2),
+        ("longitude", safe_float, 3),
+        ("altitude", safe_float, 4),
+        ("quality_flag", safe_int, 5),
+        ("num_sats", safe_int, 6),
+        ("sdn", safe_float, 7),
+        ("sde", safe_float, 8),
+        ("sdu", safe_float, 9),
+        ("sdne", safe_float, 10),
+        ("sdeu", safe_float, 11),
+        ("sdun", safe_float, 12),
+        ("diff_age", safe_float, 13),
+        ("ratio", safe_float, 14)
         ]
     }
 
@@ -189,11 +226,12 @@ parse_maps = {
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
     if not re.match('(^\$GP|^\$GA|^\$GN|^\$GL).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
-        logger.warn("Regex didn't match, sentence not valid NMEA? Sentence was: %s" % repr(nmea_sentence))
+        logger.warn("Regex didn't match, sentence not valid NMEA? Sentence was:"
+                    " %s" % repr(nmea_sentence))
         return False
 
     # Remove the last bit after the asterisk, this is the checksum
-    nmea_sentence = nmea_sentence.split("*",1)[0]
+    nmea_sentence = nmea_sentence.split("*", 1)[0]
     
     # Split on the commas
     fields = [field.strip(',') for field in nmea_sentence.split(',')]
@@ -203,7 +241,8 @@ def parse_nmea_sentence(nmea_sentence):
 
     # Check to see if we have a maping for this message type
     if not sentence_type in parse_maps:
-        logger.warn("Sentence type %s not in parse map, ignoring." % repr(sentence_type))
+        logger.warn("Sentence type %s not in parse map, ignoring." %
+                    repr(sentence_type))
         return False
 
     # Parse the message, and return it
@@ -212,3 +251,16 @@ def parse_nmea_sentence(nmea_sentence):
     for entry in parse_map:
         parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
     return {sentence_type: parsed_sentence}
+
+
+def parse_llh_sentence(llh_sentence):
+    fields = llh_sentence.split()
+
+    parsed_sentence = {}
+    for entry in parse_maps['LLH']:
+        parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
+
+    # Build a full covariance matrix from the given values.
+    parsed_sentence['position_covariance'] = covariance_matrix(parsed_sentence)
+    parsed_sentence['position_covariance_type'] = LLH().COVARIANCE_TYPE_KNOWN
+    return parsed_sentence
