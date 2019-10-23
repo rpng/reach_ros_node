@@ -17,14 +17,13 @@ uint8 quality_flag
 # Number of valid satellites.
 uint8 num_sats
 
-# Standard deviations, from which the full covariance matrix can be constructed.
-# Reference frame is North, East, Up.
-float64 sdn
-float64 sde
-float64 sdu
-float64 sdne
-float64 sdeu
-float64 sdun
+float64[9] position_covariance
+uint8 COVARIANCE_TYPE_UNKNOWN = 0
+uint8 COVARIANCE_TYPE_APPROXIMATED = 1
+uint8 COVARIANCE_TYPE_DIAGONAL_KNOWN = 2
+uint8 COVARIANCE_TYPE_KNOWN = 3
+uint8 position_covariance_type
 
+# RTKLIB-specific stats.
 float64 diff_age
 float64 ratio

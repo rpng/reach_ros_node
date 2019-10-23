@@ -295,12 +295,9 @@ class RosLLHDriver(object):
         llh_msg.altitude = parsed_sentence['altitude']
         llh_msg.quality_flag = parsed_sentence['quality_flag']
         llh_msg.num_sats = parsed_sentence['num_sats']
-        llh_msg.sdn = parsed_sentence['sdn']
-        llh_msg.sde = parsed_sentence['sde']
-        llh_msg.sdu = parsed_sentence['sdu']
-        llh_msg.sdne = parsed_sentence['sdne']
-        llh_msg.sdeu = parsed_sentence['sdeu']
-        llh_msg.sdun = parsed_sentence['sdun']
+        llh_msg.position_covariance = parsed_sentence['position_covariance']
+        llh_msg.position_covariance_type = parsed_sentence[
+            'position_covariance_type']
         llh_msg.diff_age = parsed_sentence['diff_age']
         llh_msg.ratio = parsed_sentence['ratio']
         self.llh_pub.publish(llh_msg)

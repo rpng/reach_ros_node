@@ -39,6 +39,7 @@ import math
 import logging
 logger = logging.getLogger('rosout')
 
+from reach_ros_node.msg import LLH
 
 def safe_float(field):
     try:
@@ -108,6 +109,25 @@ def convert_knots_to_mps(knots):
 # Need this wrapper because math.radians doesn't auto convert inputs
 def convert_deg_to_rads(degs):
     return math.radians(safe_float(degs))
+
+
+def covariance_matrix(llh):
+    """
+    Return a full 9-element (symmetric) covariance matrix,
+    given the six known stdev values in the LLH sentence.
+    Args:
+        llh (str): LLH sentence, as received from an Emlid Reach.
+            See page 101 in doc/rtklib_manaual_2.4.2.pdf.
+    Returns:
+        cm (list(float)): full 9-element covariance matrix.
+    """
+    cm = [llh['sdn'], llh['sdne'], llh['sdun'],
+          llh['sdne'], llh['sde'], llh['sdeu'],
+          llh['sdun'], llh['sdeu'], llh['sdu']]
+
+    # Cov == sigma ^ 2.
+    cm = map(lambda sigma: sigma ** 2, cm)
+    return cm
 
 
 """
@@ -235,7 +255,12 @@ def parse_nmea_sentence(nmea_sentence):
 
 def parse_llh_sentence(llh_sentence):
     fields = llh_sentence.split()
+
     parsed_sentence = {}
     for entry in parse_maps['LLH']:
         parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
+
+    # Build a full covariance matrix from the given values.
+    parsed_sentence['position_covariance'] = covariance_matrix(parsed_sentence)
+    parsed_sentence['position_covariance_type'] = LLH().COVARIANCE_TYPE_KNOWN
     return parsed_sentence
