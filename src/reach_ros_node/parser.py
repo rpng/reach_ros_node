@@ -182,6 +182,23 @@ parse_maps = {
         ("pdop", safe_float, 4),
         ("hdop", safe_float, 5),
         ("vdop", safe_float, 6)
+        ],
+    "LLH": [
+        ("date", str, 0),
+        ("time", str, 1),
+        ("latitude", safe_float, 2),
+        ("longitude", safe_float, 3),
+        ("altitude", safe_float, 4),
+        ("quality_flag", safe_int, 5),
+        ("num_sats", safe_int, 6),
+        ("sdn", safe_float, 7),
+        ("sde", safe_float, 8),
+        ("sdu", safe_float, 9),
+        ("sdne", safe_float, 10),
+        ("sdeu", safe_float, 11),
+        ("sdun", safe_float, 12),
+        ("age", safe_float, 13),
+        ("ratio", safe_float, 14)
         ]
     }
 
@@ -194,7 +211,7 @@ def parse_nmea_sentence(nmea_sentence):
         return False
 
     # Remove the last bit after the asterisk, this is the checksum
-    nmea_sentence = nmea_sentence.split("*",1)[0]
+    nmea_sentence = nmea_sentence.split("*", 1)[0]
     
     # Split on the commas
     fields = [field.strip(',') for field in nmea_sentence.split(',')]
@@ -214,3 +231,11 @@ def parse_nmea_sentence(nmea_sentence):
     for entry in parse_map:
         parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
     return {sentence_type: parsed_sentence}
+
+
+def parse_llh_sentence(llh_sentence):
+    fields = llh_sentence.split()
+    parsed_sentence = {}
+    for entry in parse_maps['LLH']:
+        parsed_sentence[entry[0]] = entry[1](fields[entry[2]])
+    return parsed_sentence

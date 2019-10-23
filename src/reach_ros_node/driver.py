@@ -39,6 +39,7 @@ from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
 
 from reach_ros_node.checksum_utils import check_nmea_checksum
+from reach_ros_node.msg import LLH
 import reach_ros_node.parser
 
 
@@ -108,7 +109,7 @@ class RosNMEADriver(object):
             self.has_timeref = False
 
     # Parses the GGA NMEA message type.
-    def parse_GGA(self,datag):
+    def parse_GGA(self, datag):
         # Check if we should parse this message.
         if not 'GGA' in datag:
             return
@@ -151,7 +152,7 @@ class RosNMEADriver(object):
         self.has_fix = True
 
     # Parses the GST NMEA message type.
-    def parse_GST(self,datag):
+    def parse_GST(self, datag):
         # Check if we should parse this message.
         if not 'GST' in datag:
             return
@@ -168,7 +169,7 @@ class RosNMEADriver(object):
         self.has_std = True
 
     # Parses the VTG NMEA message type.
-    def parse_VTG(self,datag):
+    def parse_VTG(self, datag):
         # Check if we should parse this message.
         if not 'VTG' in datag:
             return
@@ -243,7 +244,7 @@ class RosNMEADriver(object):
         self.has_vel = True
 
     # Parses the NMEA messages and just grab the time reference.
-    def parse_time(self,datag):
+    def parse_time(self, datag):
 
         # Get our message data.
         if not self.use_rmc and 'GGA' in datag:
@@ -266,3 +267,21 @@ class RosNMEADriver(object):
         self.msg_timeref.time_ref = rospy.Time.from_sec(data['utc_time'])
         self.msg_timeref.source = self.frame_timeref
         self.has_timeref = True
+
+
+class RosLLHDriver(object):
+    def __init__(self):
+        self.llh_pub = rospy.Publisher('llh', LLH, queue_size=1)
+        self.llh_msg = LLH()
+
+    def process_line(self, llh_string):
+        parsed_sentence = reach_ros_node.parser.parse_llh_sentence(llh_string)
+        if not parsed_sentence:
+            rospy.logwarn("Failed to parse LLH sentence. Sentence was: %s" %
+                          llh_string)
+            return
+
+        # Publish here.
+
+        assert False, "Not yet implemented."
+
