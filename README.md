@@ -27,11 +27,14 @@ Right now this supports all NMEA messages from the package, while some are not u
   * `/tcpfix` - NavSatFixed
   * `/tcpvel` - TwistedStamped
   * `/tcptime` - TimeReference
+  * `/llh` - reach_ros_node/LLH (see below)
 * Can specify the following launch parameters
   * `~frame_timeref` - Frame of the time reference
   * `~frame_gps` - Frame of the fix and velocity
   * `~use_rostime` - If set to true, ROS time is used instead of the GPS time
   * `~use_rmc` - Use compressed RMC message (note: this does not have the covariance for the fix)
+  * `~llh_port` - If set, and the Reach unit is appropriately configured, the driver will also read LLH sentences from the unit, and publish them as `reach_ros_node.msg.LLH`.
+ 
 
 
 
