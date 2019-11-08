@@ -31,6 +31,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# Number of fields in the LLH output from the Reach.
+LLH_FIELD_COUNT = 15
+
 import re
 import time
 import calendar
@@ -255,6 +258,14 @@ def parse_nmea_sentence(nmea_sentence):
 
 def parse_llh_sentence(llh_sentence):
     fields = llh_sentence.split()
+
+    # If the LLH feed should restart (e.g. when we change settings in Reachview),
+    # the first line is a header that looks like this:
+    # % (lat/lon/height=WGS84/ellipsoidal,Q=1:fix,2:float,3:sbas,4:dgps,5:single,6:ppp,ns=# of satellites),
+    # We skip this one.
+    if len(fields) != LLH_FIELD_COUNT:
+        # Malformed sentence.
+        return None
 
     parsed_sentence = {}
     for entry in parse_maps['LLH']:
