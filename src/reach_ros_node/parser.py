@@ -72,10 +72,10 @@ def convert_time(nmea_utc):
     if not nmea_utc[0:2] or not nmea_utc[2:4] or not nmea_utc[4:6] or not nmea_utc[7:]:
         return float('NaN')
     else:
-        hours = int(nmea_utc[0:2])
-        minutes = int(nmea_utc[2:4])
-        seconds = int(nmea_utc[4:6])
-        milliseconds = float(nmea_utc[7:])
+        hours = safe_int(nmea_utc[0:2])
+        minutes = safe_int(nmea_utc[2:4])
+        seconds = safe_int(nmea_utc[4:6])
+        milliseconds = safe_float(nmea_utc[7:])
         utc_list[3] = hours
         utc_list[4] = minutes
         utc_list[5] = seconds
