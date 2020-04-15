@@ -1,0 +1,11 @@
+<launch>
+    <node name="gps" pkg="reach_ros_node" type="nmea_tcp_driver" respawn="true">
+        <param name="~frame_gps" value="base_link"/>
+        <param name="~host" value="192.168.2.15" />
+        <param name="~port" value="12346" />
+
+        <!-- Optional LLH output. The Reach must be configured to
+        output LLH. Delete this entry if not needed. -->
+        <param name="~llh_port" value="12347" />
+    </node>
+</launch>
