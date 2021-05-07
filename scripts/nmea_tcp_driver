@@ -118,9 +118,9 @@ class ReachSocketHandler:
             if not part or len(part) == 0:
                 self.reconnect_to_device()
                 continue
-            if part != "\n":
-                line += part
-            elif part == "\n":
+            if part.decode() != "\n":
+                line += part.decode()
+            else:
                 break
         return line
 
