@@ -33,26 +33,32 @@
 
 import math
 
-import rospy
+import rclpy
 
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
+from rclpy.time import Time
 
 from reach_ros_node.checksum_utils import check_nmea_checksum
 import reach_ros_node.parser
 
 
 class RosNMEADriver(object):
-    def __init__(self):
+    def __init__(self,parent_node: rclpy.Node):
+        # Set parent node 
+        self.parent = parent_node
+
         # Our publishers
-        self.fix_pub = rospy.Publisher('tcpfix', NavSatFix, queue_size=1)
-        self.vel_pub = rospy.Publisher('tcpvel', TwistStamped, queue_size=1)
-        self.timeref_pub = rospy.Publisher('tcptime', TimeReference, queue_size=1)
+        self.parent.fix_pub = self.parent.create_publisher(NavSatFix,'tcpfix',10)
+        self.parent.vel_pub = self.parent.create_publisher(TwistStamped,'tcpvel',10)
+        self.parent.timeref_pub = self.parent.create_publisher(TimeReference,'tcptime',10)
+
         # Frame of references we should publish in
-        self.frame_timeref = rospy.get_param('~frame_timeref', 'gps')
-        self.frame_gps = rospy.get_param('~frame_gps', 'gps')
-        self.use_rostime = rospy.get_param('~use_rostime', True)
-        self.use_rmc = rospy.get_param('~use_rmc', False)
+        self.frame_timeref = self.parent.get_parameter('frame_timeref').value or 'gps'
+        self.frame_gps = self.parent.get_parameter('frame_gps').value or 'gps'
+        self.use_rostime = self.parent.get_parameter('use_rostime').value or True
+        self.use_rmc = self.parent.get_parameter('use_rmc').value or False
+        
         # Flags for what information we have
         self.has_fix = False
         self.has_std = False
@@ -63,21 +69,20 @@ class RosNMEADriver(object):
         self.msg_vel = TwistStamped()
         self.msg_timeref = TimeReference()
 
-
-
     # Will process the nmea_string, and try to update our current state
     # Should try to publish as many messages as possible with the given data
     def process_line(self, nmea_string):
         
         # Check if valid message
         if not check_nmea_checksum(nmea_string):
-            rospy.logwarn("Received a sentence with an invalid checksum. Sentence was: %s" % repr(nmea_string))
+            self.parent.get_logger().warning("Received a sentence with an invalid checksum. Sentence was: %s" % repr(nmea_string))
             return
         
         # Else we are good, lets try to process this message
         parsed_sentence = reach_ros_node.parser.parse_nmea_sentence(nmea_string)
         if not parsed_sentence:
-            rospy.logwarn("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            #rospy.logwarn("Failed to parse NMEA sentence. Sentence was: %s" % nmea_string)
+            self.parent.get_logger().warning("Failed to parse NMEA sentence. Sentence was: %s" % repr(nmea_string))
             return
 
         # We have a good message!!
@@ -94,17 +99,17 @@ class RosNMEADriver(object):
         # Now that we are done with processing messages
         # Lets publish what we have!
         if self.has_fix and self.has_std:
-            self.fix_pub.publish(self.msg_fix)
+            self.parent.fix_pub.publish(self.msg_fix)
             self.msg_fix = NavSatFix()
             self.has_fix = False
             self.has_std = False
         if self.has_vel:
-            self.vel_pub.publish(self.msg_vel)
+            self.parent.vel_pub.publish(self.msg_vel)
             self.msg_vel = TwistStamped()
             self.has_vel = False
         if self.has_timeref:
             self.timeref_pub.publish(self.msg_timeref)
-            self.msg_timeref = TimeReference()
+            self.parent.msg_timeref = TimeReference()
             self.has_timeref = False
 
 
@@ -122,9 +127,9 @@ class RosNMEADriver(object):
         data = datag['GGA']
         # If using ROS time, use the current timestamp
         if self.use_rostime:
-            self.msg_fix.header.stamp = rospy.get_rostime()
+            self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_fix.header.stamp = rospy.Time.from_sec(data['utc_time'])
+            self.msg_fix.header.stamp = Time.from_sec(data['utc_time'])
         # Set the frame ID
         self.msg_fix.header.frame_id = self.frame_gps
         # Set what our fix status should be
@@ -174,8 +179,6 @@ class RosNMEADriver(object):
         self.has_std = True
 
 
-
-
     # Parses the VTG NMEA message type
     def parse_VTG(self,datag):
         # Check if we should parse this message
@@ -190,7 +193,7 @@ class RosNMEADriver(object):
         # If using ROS time, use the current timestamp
         # Else this message doesn't provide a time, so just set to zero
         if self.use_rostime:
-            self.msg_vel.header.stamp = rospy.get_rostime()
+            self.msg_vel.header.stamp = self.parent.get_clock().now().to_msg()
         else:
             self.msg_vel.header.stamp = rospy.Time.from_sec(0)
         # Set the frame ID
@@ -215,9 +218,9 @@ class RosNMEADriver(object):
         data = datag['RMC']
         # If using ROS time, use the current timestamp
         if self.use_rostime:
-            self.msg_fix.header.stamp = rospy.get_rostime()
+            self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_fix.header.stamp = rospy.Time.from_sec(data['utc_time'])
+            self.msg_fix.header.stamp = Time.from_sec(data['utc_time'])
         # Set the frame ID
         self.msg_fix.header.frame_id = self.frame_gps
         # Update the fix message
@@ -244,9 +247,9 @@ class RosNMEADriver(object):
         # Next lets publish the velocity we have
         # If using ROS time, use the current timestamp
         if self.use_rostime:
-            self.msg_vel.header.stamp = rospy.get_rostime()
+            self.msg_vel.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_vel.header.stamp = rospy.Time.from_sec(data['utc_time'])
+            self.msg_vel.header.stamp = Time.from_sec(data['utc_time'])
         # Set the frame ID
         self.msg_vel.header.frame_id = self.frame_gps
         # Calculate the change in orientatoin
@@ -271,13 +274,13 @@ class RosNMEADriver(object):
             return
         # If using ROS time, use the current timestamp
         if self.use_rostime:
-            self.msg_timeref.header.stamp = rospy.get_rostime()
+            self.msg_timeref.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_timeref.header.stamp = rospy.Time.from_sec(data['utc_time'])
+            self.msg_timeref.header.stamp = Time.from_sec(data['utc_time'])
         # Set the frame ID
         self.msg_timeref.header.frame_id = self.frame_timeref
         # Set the actuall time reference
-        self.msg_timeref.time_ref = rospy.Time.from_sec(data['utc_time'])
+        self.msg_timeref.time_ref = Time.from_sec(data['utc_time'])
         self.msg_timeref.source = self.frame_timeref
         self.has_timeref = True
         
