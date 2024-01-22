@@ -123,7 +123,7 @@ class RosNMEADriver(object):
             self.msg_vel = TwistStamped()
             self.has_vel = False
         if self.has_timeref:
-            self.timeref_pub.publish(self.msg_timeref)
+            self.parent.timeref_pub.publish(self.msg_timeref)
             self.parent.msg_timeref = TimeReference()
             self.has_timeref = False
 
