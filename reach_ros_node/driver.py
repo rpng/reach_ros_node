@@ -118,13 +118,13 @@ class RosNMEADriver(object):
     # Parses the GGA NMEA message type
     def parse_GGA(self,datag):
         # Check if we should parse this message
-        if not 'GGA' in datag:
+        if not b'GGA' in datag:
             return
         # Return if are using RCm
         if self.use_rmc:
             return
         # Else lets set what variables we can
-        data = datag['GGA']
+        data = datag[b'GGA']
         # If using ROS time, use the current timestamp
         if self.use_rostime:
             self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
@@ -164,13 +164,13 @@ class RosNMEADriver(object):
     # Parses the GST NMEA message type
     def parse_GST(self,datag):
         # Check if we should parse this message
-        if not 'GST' in datag:
+        if not b'GST' in datag:
             return
         # Return if are using RCM
         if self.use_rmc:
             return
         # Else lets set what variables we can
-        data = datag['GST']
+        data = datag[b'GST']
         # Update the fix message with std
         self.msg_fix.position_covariance[0] = pow(data['latitude_sigma'],2)
         self.msg_fix.position_covariance[4] = pow(data['longitude_sigma'],2)
@@ -182,13 +182,13 @@ class RosNMEADriver(object):
     # Parses the VTG NMEA message type
     def parse_VTG(self,datag):
         # Check if we should parse this message
-        if not 'VTG' in datag:
+        if not b'VTG' in datag:
             return
         # Return if are using RCM
         if self.use_rmc:
             return
         # Else lets set what variables we can
-        data = datag['VTG']
+        data = datag[b'VTG']
         # Next lets publish the velocity we have
         # If using ROS time, use the current timestamp
         # Else this message doesn't provide a time, so just set to zero
@@ -209,13 +209,13 @@ class RosNMEADriver(object):
     # Parses the RMC NMEA message type
     def parse_RMC(self,datag):
         # Check if we should parse this message
-        if not 'RMC' in datag:
+        if not b'RMC' in datag:
             return
         # Return if not using RCM
         if not self.use_rmc:
             return
         # Else lets set what variables we can
-        data = datag['RMC']
+        data = datag[b'RMC']
         # If using ROS time, use the current timestamp
         if self.use_rostime:
             self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
@@ -263,10 +263,10 @@ class RosNMEADriver(object):
     def parse_time(self,datag):
 
         # Get our message data
-        if not self.use_rmc and 'GGA' in datag:
-            data = datag['GGA']
-        elif self.use_rmc and 'RMC' in datag:
-            data = datag['RMC']
+        if not self.use_rmc and b'GGA' in datag:
+            data = datag[b'GGA']
+        elif self.use_rmc and b'RMC' in datag:
+            data = datag[b'RMC']
         else:
             return
         # Return if time is NaN

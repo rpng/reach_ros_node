@@ -94,7 +94,7 @@ class ros2_ReachSocketHandler(Node):
     # Also set a timeout so we can make sure we have a valid socket
     # https://stackoverflow.com/a/15175067
     def buffered_readLine(self):
-        line = ""
+        line = b""
         while rclpy.ok():
             # Try to get data from it
             try:
@@ -106,9 +106,9 @@ class ros2_ReachSocketHandler(Node):
             if not part or len(part) == 0:
                 self.reconnect_to_device()
                 continue
-            if part != "\n":
+            if part != b"\n":
                 line += part
-            elif part == "\n":
+            elif part == b"\n":
                 break
         return line
     
