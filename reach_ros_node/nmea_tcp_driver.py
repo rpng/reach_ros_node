@@ -82,7 +82,7 @@ class ros2_ReachSocketHandler(Node):
             try:
                 self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.soc.settimeout(5.0)
-                self.soc.connect((self.get_parameter('host'),self.get_parameter('port')))
+                self.soc.connect(str((self.get_parameter('host')),int(self.get_parameter('port'))))
                 self.get_logger().info('Successfully connected to device, starting publishing!')
                 return
             except socket.timeout:
