@@ -63,9 +63,7 @@ class ros2_ReachSocketHandler(Node):
 
         try:
             while rclpy.ok():
-                print('read buffered line')
                 data = self.buffered_readLine().strip()  
-                print(data)
                 try:
                     driver.process_line(data) 
                 except ValueError as e:
