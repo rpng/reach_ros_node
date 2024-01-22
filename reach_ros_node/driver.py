@@ -38,13 +38,13 @@ import rclpy
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
 from rclpy.time import Time
-
+from rclpy.node import Node
 from reach_ros_node.checksum_utils import check_nmea_checksum
 import reach_ros_node.parser
 
 
 class RosNMEADriver(object):
-    def __init__(self,parent_node: rclpy.Node):
+    def __init__(self,parent_node:Node):
         # Set parent node 
         self.parent = parent_node
 
