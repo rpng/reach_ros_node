@@ -42,8 +42,16 @@ class ros2_ReachSocketHandler(Node):
     # Set our parameters and the default socket to open
     def __init__(self):
         super().__init__('reach_ros_node')
-        self.host = self.get_parameter('host').value or 'reach.local'
-        self.port = self.get_parameter('port').value or 12346  
+        try:
+            self.host = self.get_parameter('host').value
+        except:
+            #self.host ='reach.local'
+            self.host = '192.168.2.15'
+        try: 
+            self.port = self.get_parameter('port').value
+        except:
+            #self.port = 12346  
+            self.port = 9001  
     
     # Should open the connection and connect to the device
     # This will then also start publishing the information
@@ -52,15 +60,21 @@ class ros2_ReachSocketHandler(Node):
         self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.host),str(self.port)))
         self.connect_to_device()
         try:
-            # Create the driver
-            driver = reach_ros_node.driver.RosNMEADriver()
+            driver = reach_ros_node.driver.RosNMEADriver(self)
+        except Exception as e:
+            self.get_logger().error("an error occured while trying to make the driver. Error was: %s." %e)
+
+        try:
             while rclpy.ok():
+                print('read buffered line')
                 data = self.buffered_readLine().strip()  
+                print(data)
                 try:
                     driver.process_line(data) 
                 except ValueError as e:
                     self.get_logger().info("Value error, likely due to missing fields in the NMEA message. Error was: %s." % e)
-        except:
+        except Exception as e:
+            self.get_logger().error("an error occured while reading lines from device. Error was: %s." %e)
             # Close GPS socket when done
             self.soc.close()
 
