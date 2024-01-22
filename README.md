@@ -14,11 +14,9 @@ Right now this supports all NMEA messages from the package, while some are not u
 4. Edit the "Position output"
    * Be in TCP mode
    * Role: Server
-   * Address: localhost
-   * Port: any free port
    * Format: NMEA
-5. Using the IP of the Reach RTK and the specified port launch this package
-6. `rosrun reach_ros_node nmea_tcp_driver _host:=128.4.89.123 _port:=2234`
+5. Using the IP of the Reach RTK and any free port launch this package
+6. ```ros2 run reach_ros_node nmea_tcp_driver --ros-args -p host:="192.168.2.15" -p port:="9001" ```
 
 
 ## Driver Details
@@ -27,17 +25,17 @@ Right now this supports all NMEA messages from the package, while some are not u
   * `/tcpfix` - NavSatFixed
   * `/tcpvel` - TwistedStamped
   * `/tcptime` - TimeReference
-* Can specify the following launch parameters
-  * `~frame_timeref` - Frame of the time reference
-  * `~frame_gps` - Frame of the fix and velocity
-  * `~use_rostime` - If set to true, ROS time is used instead of the GPS time
+* Can specify the following launch parameters 
+  * `~host` - IP adress of the Reach RTK GNSS (default: 'reach.local')
+  * `~port` - The port number for the TCP connection (default: 123456)
+  * `~frame_timeref` - Frame of the time reference (default: 'gps')
+  * `~frame_gps` - Frame of the fix and velocity (default: 'gps')
+  * `~use_rostime` - If set to true, ROS time is used instead of the GPS time (default: True)
   * `~use_rmc` - Use compressed RMC message (note: this does not have the covariance for the fix)
-
-
 
 ## Credit
 
-Original starting point of the driver was the ROS driver [nmea_navsat_driver](https://github.com/ros-drivers/nmea_navsat_driver) which was then expanded by [CearLab](https://github.com/CearLab/nmea_tcp_driver) to work with the Reach RTK.
+Original starting point of the driver was the ROS driver [nmea_navsat_driver](https://github.com/ros-drivers/nmea_navsat_driver) which was then expanded by [CearLab](https://github.com/CearLab/nmea_tcp_driver) to work with the Reach RTK. Migrated to ros2 by 
 This package is more complete, and aims to allow for use of the Reach RTK in actual robotic systems, please open a issue if you run into any issues.
 Be sure to checkout this other driver by [enwaytech](https://github.com/enwaytech/reach_rs_ros_driver) for the Reach RS.
 
