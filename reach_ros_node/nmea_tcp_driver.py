@@ -42,22 +42,19 @@ class ros2_ReachSocketHandler(Node):
     # Set our parameters and the default socket to open
     def __init__(self):
         super().__init__('reach_ros_node')
-        try:
-            self.host = self.get_parameter('host').value
-        except:
-            #self.host ='reach.local'
-            self.host = '192.168.2.15'
-        try: 
-            self.port = self.get_parameter('port').value
-        except:
-            #self.port = 12346  
-            self.port = 9001  
-    
+
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('host', 'reach.local'),
+                ('port', 12346)]
+        )
+             
     # Should open the connection and connect to the device
     # This will then also start publishing the information
     def start(self):
         # Try to connect to the device
-        self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.host),str(self.port)))
+        self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.get_parameter('host')),str(self.get_parameter('port'))))
         self.connect_to_device()
         try:
             driver = reach_ros_node.driver.RosNMEADriver(self)
@@ -85,7 +82,7 @@ class ros2_ReachSocketHandler(Node):
             try:
                 self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.soc.settimeout(5.0)
-                self.soc.connect((self.host,self.port))
+                self.soc.connect((self.get_parameter('host'),self.get_parameter('port')))
                 self.get_logger().info('Successfully connected to device, starting publishing!')
                 return
             except socket.timeout:
