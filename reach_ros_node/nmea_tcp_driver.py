@@ -54,7 +54,7 @@ class ros2_ReachSocketHandler(Node):
     # This will then also start publishing the information
     def start(self):
         # Try to connect to the device
-        self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.get_parameter('host')),str(self.get_parameter('port'))))
+        self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.get_parameter('host').value),str(self.get_parameter('port').value)))
         self.connect_to_device()
         try:
             driver = reach_ros_node.driver.RosNMEADriver(self)
@@ -82,7 +82,7 @@ class ros2_ReachSocketHandler(Node):
             try:
                 self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.soc.settimeout(5.0)
-                self.soc.connect(str((self.get_parameter('host')),int(self.get_parameter('port'))))
+                self.soc.connect(self.get_parameter('host').value,self.get_parameter('port').value)
                 self.get_logger().info('Successfully connected to device, starting publishing!')
                 return
             except socket.timeout:
