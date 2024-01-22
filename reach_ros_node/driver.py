@@ -54,10 +54,26 @@ class RosNMEADriver(object):
         self.parent.timeref_pub = self.parent.create_publisher(TimeReference,'tcptime',10)
 
         # Frame of references we should publish in
-        self.frame_timeref = self.parent.get_parameter('frame_timeref').value or 'gps'
-        self.frame_gps = self.parent.get_parameter('frame_gps').value or 'gps'
-        self.use_rostime = self.parent.get_parameter('use_rostime').value or True
-        self.use_rmc = self.parent.get_parameter('use_rmc').value or False
+        
+        try:
+            self.frame_timeref = self.parent.get_parameter('frame_timeref').value
+        except:
+            self.frame_timeref = 'gps'
+        
+        try:
+            self.frame_gps = self.parent.get_parameter('frame_gps').value
+        except:
+            self.frame_gps = 'gps'
+
+        try:
+            self.use_rostime = self.parent.get_parameter('use_rostime').value
+        except:
+            self.use_rostime = True
+
+        try:
+            self.use_rmc = self.parent.get_parameter('use_rmc').value
+        except:
+            self.use_rmc = False
         
         # Flags for what information we have
         self.has_fix = False
