@@ -33,11 +33,10 @@
 
 import math
 
-import rclpy
+from builtin_interfaces.msg import Time
 
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
-from rclpy.time import Time
 from rclpy.node import Node
 from reach_ros_node.checksum_utils import check_nmea_checksum
 import reach_ros_node.parser
@@ -145,7 +144,7 @@ class RosNMEADriver(object):
         if self.use_rostime:
             self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_fix.header.stamp = Time.from_sec(data['utc_time'])
+            self.msg_fix.header.stamp = Time()
         # Set the frame ID
         self.msg_fix.header.frame_id = self.frame_gps
         # Set what our fix status should be
@@ -211,7 +210,7 @@ class RosNMEADriver(object):
         if self.use_rostime:
             self.msg_vel.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_vel.header.stamp = rospy.Time.from_sec(0)
+            self.msg_vel.header.stamp = Time()
         # Set the frame ID
         self.msg_vel.header.frame_id = self.frame_gps
         # Calculate the change in orientatoin
@@ -236,7 +235,7 @@ class RosNMEADriver(object):
         if self.use_rostime:
             self.msg_fix.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_fix.header.stamp = Time.from_sec(data['utc_time'])
+            self.msg_vel.header.stamp = Time()
         # Set the frame ID
         self.msg_fix.header.frame_id = self.frame_gps
         # Update the fix message
@@ -265,15 +264,13 @@ class RosNMEADriver(object):
         if self.use_rostime:
             self.msg_vel.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_vel.header.stamp = Time.from_sec(data['utc_time'])
+            self.msg_vel.header.stamp = Time()
         # Set the frame ID
         self.msg_vel.header.frame_id = self.frame_gps
         # Calculate the change in orientatoin
         self.msg_vel.twist.linear.x = data['speed'] * math.sin(data['true_course'])
         self.msg_vel.twist.linear.y = data['speed'] * math.cos(data['true_course'])
         self.has_vel = True
-
-
 
     # Parses the NMEA messages and just grab the time reference
     def parse_time(self,datag):
@@ -292,14 +289,10 @@ class RosNMEADriver(object):
         if self.use_rostime:
             self.msg_timeref.header.stamp = self.parent.get_clock().now().to_msg()
         else:
-            self.msg_timeref.header.stamp = Time.from_sec(data['utc_time'])
+            self.msg_vel.header.stamp = Time()
         # Set the frame ID
         self.msg_timeref.header.frame_id = self.frame_timeref
         # Set the actuall time reference
-        self.msg_timeref.time_ref = Time.from_sec(data['utc_time'])
+        self.msg_timeref.time_ref = Time()
         self.msg_timeref.source = self.frame_timeref
         self.has_timeref = True
-        
-
-
-
