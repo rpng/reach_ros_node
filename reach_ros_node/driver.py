@@ -32,15 +32,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import math
-
 from builtin_interfaces.msg import Time
-
 from sensor_msgs.msg import NavSatFix, NavSatStatus, TimeReference
 from geometry_msgs.msg import TwistStamped
 from rclpy.node import Node
 from reach_ros_node.checksum_utils import check_nmea_checksum
 import reach_ros_node.parser
-
 
 class RosNMEADriver(object):
     def __init__(self,parent_node:Node):
@@ -53,26 +50,10 @@ class RosNMEADriver(object):
         self.parent.timeref_pub = self.parent.create_publisher(TimeReference,'tcptime',10)
 
         # Frame of references we should publish in
-        
-        try:
-            self.frame_timeref = self.parent.get_parameter('frame_timeref').value
-        except:
-            self.frame_timeref = 'gps'
-        
-        try:
-            self.frame_gps = self.parent.get_parameter('frame_gps').value
-        except:
-            self.frame_gps = 'gps'
-
-        try:
-            self.use_rostime = self.parent.get_parameter('use_rostime').value
-        except:
-            self.use_rostime = True
-
-        try:
-            self.use_rmc = self.parent.get_parameter('use_rmc').value
-        except:
-            self.use_rmc = False
+        self.frame_timeref = self.parent.get_parameter('frame_timeref').value
+        self.frame_gps = self.parent.get_parameter('frame_gps').value
+        self.use_rostime = self.parent.get_parameter('use_rostime').value
+        self.use_rmc = self.parent.get_parameter('use_rmc').value
         
         # Flags for what information we have
         self.has_fix = False
@@ -126,9 +107,6 @@ class RosNMEADriver(object):
             self.parent.timeref_pub.publish(self.msg_timeref)
             self.parent.msg_timeref = TimeReference()
             self.has_timeref = False
-
-
-
 
     # Parses the GGA NMEA message type
     def parse_GGA(self,datag):

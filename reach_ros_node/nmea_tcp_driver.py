@@ -37,7 +37,6 @@ import rclpy
 import reach_ros_node.driver
 from rclpy.node import Node
 
-
 class ros2_ReachSocketHandler(Node):
     # Set our parameters and the default socket to open
     def __init__(self):
@@ -47,7 +46,11 @@ class ros2_ReachSocketHandler(Node):
             namespace='',
             parameters=[
                 ('host', 'reach.local'),
-                ('port', 12346)]
+                ('port', 12346),
+                ('frame_gps', 'gps'),
+                ('frame_timeref', 'gps'),
+                ('use_rostime', True),
+                ('use_rmc', False)]
         )
              
     # Should open the connection and connect to the device
@@ -64,7 +67,7 @@ class ros2_ReachSocketHandler(Node):
         try:
             while rclpy.ok():
                 data = self.buffered_readLine().strip()  
-                rclpy.spin_once(self, timeout_sec=0.1)
+                rclpy.spin_once(self, timeout_sec=0.1) # allow functions such as ros2 node info, ros2 param list to work
                 try:
                     driver.process_line(data) 
                 except ValueError as e:
