@@ -1,31 +1,27 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>reach_ros_node</name>
-  <version>0.5.0</version>
+  <version>2.0.0</version>
   <description>
-	Package to parse NMEA strings from TCP input and publish a very simple GPS message.
+  Package to parse NMEA strings from TCP input and publish a very simple GPS message.
   Does not require the GPSD deamon to be installed.
   Converted to work with the Reach RTK GPS units.
   </description>
-
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <maintainer email="pgneva@udel.edu">Patrick Geneva</maintainer>
-
-  <!-- One license tag required, multiple allowed, one license per tag -->
   <license>BSD</license>
 
+  <depend>rclpy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nmea_msgs</depend>
+  <depend>sensor_msgs</depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roslint</build_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>python-serial</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nmea_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
-  <!-- This is a pure Python package, so mark it architecture independent -->
-  <export><architecture_independent/></export>
-
-  
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
 </package>
