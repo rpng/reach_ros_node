@@ -118,7 +118,7 @@ http://www.trimble.com/oem_receiverhelp/v4.44/en/NMEA-0183messages_MessageOvervi
 https://www.sparkfun.com/datasheets/GPS/NMEA%20Reference%20Manual1.pdf
 """
 parse_maps = {
-    b"GGA": [
+    "GGA": [
         ("utc_time", convert_time, 1),
         ("latitude", convert_latitude, 2),
         ("latitude_direction", str, 3),
@@ -130,7 +130,7 @@ parse_maps = {
         ("altitude", safe_float, 9),
         ("mean_sea_level", safe_float, 11),
         ],
-    b"GST": [
+    "GST": [
         ("utc_time", convert_time, 1),
         ("ellipse_sigma_major", safe_float, 3),
         ("ellipse_sigma_minor", safe_float, 4),
@@ -139,7 +139,7 @@ parse_maps = {
         ("longitude_sigma", safe_float, 7),
         ("altitude_sigma", safe_float, 8),
         ],
-    b"RMC": [
+    "RMC": [
         ("utc_time", convert_time, 1),
         ("fix_valid", convert_status_flag, 2),
         ("latitude", convert_latitude, 3),
@@ -149,12 +149,12 @@ parse_maps = {
         ("speed", convert_knots_to_mps, 7),
         ("true_course", convert_deg_to_rads, 8),
         ],
-    b"VTG": [
+    "VTG": [
         ("ori_true", convert_deg_to_rads, 1),
         ("ori_magnetic", convert_deg_to_rads, 3),
         ("speed", convert_knots_to_mps, 5),
         ],
-    b"GSV": [
+    "GSV": [
         ("message_total", safe_int, 1),
         ("message_number", safe_int, 2),
         ("sat_in_view", safe_int, 3),
@@ -175,7 +175,7 @@ parse_maps = {
         ("sat_04_azimuth", convert_deg_to_rads, 18),
         ("sat_04_snr", safe_float, 19),
         ],
-    b"GSA": [
+    "GSA": [
         ("mode", str, 1),
         ("fix_type", safe_int, 2),
         ("sat_id", safe_int, 3),
@@ -188,15 +188,15 @@ parse_maps = {
 
 def parse_nmea_sentence(nmea_sentence):
     # Check for a valid nmea sentence
-    if not re.match(b'(^\$GP|^\$GA|^\$GN|^\$GL).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
+    if not re.match('(^\$GP|^\$GA|^\$GN|^\$GL).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.warn("Regex didn't match, sentence not valid NMEA? Sentence was: %s" % repr(nmea_sentence))
         return False
 
     # Remove the last bit after the asterisk, this is the checksum
-    nmea_sentence = nmea_sentence.split(b"*",1)[0]
+    nmea_sentence = nmea_sentence.split("*",1)[0]
     
     # Split on the commas
-    fields = [field.strip(b',') for field in nmea_sentence.split(b',')]
+    fields = [field.strip(',') for field in nmea_sentence.split(',')]
 
     # Ignore the $ and talker ID portions (e.g. GP, GL, GA, GN)
     sentence_type = fields[0][3:]
