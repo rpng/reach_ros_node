@@ -32,73 +32,74 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import serial
 import socket
-import rospy
-import os
-import sys
+import rclpy
 import reach_ros_node.driver
+from rclpy.node import Node
 
-
-class ReachSocketHandler:
-
+class ros2_ReachSocketHandler(Node):
     # Set our parameters and the default socket to open
-    def __init__(self,host,port):
-        self.host = host
-        self.port = port
-        
+    def __init__(self):
+        super().__init__('reach_ros_node')
 
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('host', 'reach.local'),
+                ('port', 12346),
+                ('frame_gps', 'gps'),
+                ('frame_timeref', 'gps'),
+                ('use_rostime', True),
+                ('use_rmc', False)]
+        )
+             
     # Should open the connection and connect to the device
     # This will then also start publishing the information
     def start(self):
         # Try to connect to the device
-        rospy.loginfo('Connecting to Reach RTK %s on port %s' % (str(self.host),str(self.port)))
+        self.get_logger().info('Connecting to Reach RTK %s on port %s' % (str(self.get_parameter('host').value),str(self.get_parameter('port').value)))
         self.connect_to_device()
         try:
-            # Create the driver
-            driver = reach_ros_node.driver.RosNMEADriver()
-            while not rospy.is_shutdown():
-                #GPS = soc.recv(1024)
-                data = self.buffered_readLine().strip()
-                # Debug print message line
-                #print(data)
-                # Try to parse this data!
+            driver = reach_ros_node.driver.RosNMEADriver(self)
+        except Exception as e:
+            self.get_logger().error("an error occured while trying to make the driver. Error was: %s." %e)
+
+        try:
+            while rclpy.ok():
+                data = self.buffered_readLine().strip()  
+                rclpy.spin_once(self, timeout_sec=0.1) # allow functions such as ros2 node info, ros2 param list to work
                 try:
-                    driver.process_line(data)
+                    driver.process_line(data) 
                 except ValueError as e:
-                    rospy.logerr("Value error, likely due to missing fields in the NMEA message. Error was: %s." % e)
-        except rospy.ROSInterruptException:
+                    self.get_logger().info("Value error, likely due to missing fields in the NMEA message. Error was: %s." % e)
+        except Exception as e:
+            self.get_logger().error("an error occured while reading lines from device. Error was: %s." %e)
             # Close GPS socket when done
             self.soc.close()
-
-
 
     # Try to connect to the device, allows for reconnection
     # Will loop till we get a connection, note we have a long timeout
     def connect_to_device(self):
-        while not rospy.is_shutdown():
+        while rclpy.ok():
             try:
                 self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.soc.settimeout(5.0)
-                self.soc.connect((self.host,self.port))
-                rospy.loginfo('Successfully connected to device, starting publishing!')
+                self.soc.connect((self.get_parameter('host').value,self.get_parameter('port').value))
+                self.get_logger().info('Successfully connected to device, starting publishing!')
                 return
             except socket.timeout:
-                rospy.logwarn_throttle(30,'Socket connection timeout. Retrying...')
+                self.get_logger().warning(30,'Socket connection timeout. Retrying...')
                 continue
             except Exception as e:
-                rospy.logerr("Socket connection error. Error was: %s." % e)
+                self.get_logger().error("Socket connection error. Error was: %s." % e)
                 exit()
-
 
     # Try to connect to the device, assuming it just was disconnected
     # Will loop till we get a connection
     def reconnect_to_device(self):
-        rospy.logwarn('Device disconnected. Reconnecting...')
+        self.get_logger().warning('Device disconnected. Reconnecting...')
         self.soc.close()
         self.connect_to_device()
-
-
 
     # Read one line from the socket
     # We want to read a single line as this is a single nmea message
@@ -106,8 +107,8 @@ class ReachSocketHandler:
     # Also set a timeout so we can make sure we have a valid socket
     # https://stackoverflow.com/a/15175067
     def buffered_readLine(self):
-        line = ""
-        while not rospy.is_shutdown():
+        line = b""
+        while rclpy.ok():
             # Try to get data from it
             try:
                 part = self.soc.recv(1)
@@ -118,27 +119,25 @@ class ReachSocketHandler:
             if not part or len(part) == 0:
                 self.reconnect_to_device()
                 continue
-            if part != "\n":
+            if part != b"\n":
                 line += part
-            elif part == "\n":
+            elif part == b"\n":
                 break
         return line
+    
+def main(args=None):
+	rclpy.init(args=args)
 
+	node = ros2_ReachSocketHandler()
+	
 
+	# Start the nodes processing thread
+	node.start()
+    #rclpy.spin(node)
+
+	# at termination of the code (generally with ctrl-c) Destroy the node explicitly
+	node.destroy_node()
+	rclpy.shutdown()
 
 if __name__ == '__main__':
-
-    # Initialize our ros node
-    rospy.init_node('reach_ros_node')
-
-    # Read in ROS parameters
-    host = rospy.get_param('~host', 'reach.local')
-    port = rospy.get_param('~port', 12346)
-
-    # Open the socket to our device, and start streaming the data
-    device = ReachSocketHandler(host,port)
-    device.start()
-
-
-
-
+	main()
