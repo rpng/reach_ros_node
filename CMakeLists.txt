@@ -6,9 +6,9 @@ find_package(catkin REQUIRED COMPONENTS roslint)
 catkin_python_setup()
 catkin_package()
 
-install(PROGRAMS
-   scripts/nmea_tcp_driver
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+catkin_install_python(PROGRAMS
+  scripts/nmea_tcp_driver
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Check package for pep8 style, add a test to fail on violations.
