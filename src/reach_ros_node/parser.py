@@ -86,7 +86,7 @@ def convert_time(nmea_utc):
         # 20 => 0.2 seconds
         # 100 =? 0.1 seconds
         # 02 => 0.02 seconds
-        unix_time = calendar.timegm(tuple(utc_list)) + milliseconds/(10.0*len(str(milliseconds)))
+        unix_time = calendar.timegm(tuple(utc_list)) + milliseconds/100.0
         return unix_time
 
 
